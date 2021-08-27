@@ -1,0 +1,28 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:3.8.19-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: barbora
+      RABBITMQ_DEFAULT_PASS: barbora
+      RABBITMQ_PID_FILE: "/var/lib/rabbitmq/mnesia/rabbitmq"
+    ports:
+      - 5672:5672
+      - 15611:15672
+    env_file:
+      - .env
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+  postgres:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: payments
+      POSTGRES_USER: barbora
+      POSTGRES_PASSWORD: barbora
+    ports:
+      - 5432:5432
+    volumes:
+      - postgresdb:/var/lib/postgresql/data
+volumes:
+  postgresdb:
