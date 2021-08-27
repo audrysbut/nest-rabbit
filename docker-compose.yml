@@ -14,15 +14,3 @@ services:
     volumes:
       - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
       - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
-  postgres:
-    image: postgres:13.3
-    environment:
-      POSTGRES_DB: payments
-      POSTGRES_USER: barbora
-      POSTGRES_PASSWORD: barbora
-    ports:
-      - 5432:5432
-    volumes:
-      - postgresdb:/var/lib/postgresql/data
-volumes:
-  postgresdb:
