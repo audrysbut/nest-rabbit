@@ -1,4 +1,4 @@
-import { DynamicModule, Inject, Module, Provider } from '@nestjs/common'
+import { DynamicModule, Module, Provider } from '@nestjs/common'
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter'
 import { Options } from 'amqplib'
 import * as Amqp from 'amqplib'
@@ -49,7 +49,6 @@ async function getConnection(config: RabbitConfig): Promise<Amqp.Connection> {
     const connection = await Amqp.connect(url, {
       credentials,
     })
-    // await this.setupInfrastructure();
     connection.on('close', (err) => {
       killApp(err)
     })
