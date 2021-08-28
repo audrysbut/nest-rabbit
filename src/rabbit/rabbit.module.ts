@@ -3,7 +3,7 @@ import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter'
 import { Options } from 'amqplib'
 import * as Amqp from 'amqplib'
 import { MESSAGE_RECEIVED } from './on-message-received'
-import { ContentProducer } from './content-producer'
+import { Publisher } from './publisher'
 
 class Exchange {
   exchange: string
@@ -82,7 +82,6 @@ async function setupInfrastructure(
       const content = JSON.parse(msg.content.toString())
       const contentToPublish = content.message ? content.message : content
       eventEmitter.emit(MESSAGE_RECEIVED + queue, contentToPublish)
-
       channel.ack(msg)
     })
   }
@@ -100,7 +99,7 @@ function makeProducersForQueues(
       provide: injectable,
       inject: ['channel'],
       useFactory: (channel: Amqp.Channel) => {
-        return new ContentProducer(channel, {
+        return new Publisher(channel, {
           queue: q.queue,
         })
       },
@@ -120,7 +119,7 @@ function makeProducersForExchanges(
       provide: injectable,
       inject: ['channel'],
       useFactory: (channel: Amqp.Channel) => {
-        return new ContentProducer(channel, {
+        return new Publisher(channel, {
           exchange: ex.exchange,
         })
       },

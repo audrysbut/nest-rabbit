@@ -2,14 +2,14 @@ import { Inject } from '@nestjs/common'
 import { Channel, Options } from 'amqplib'
 import { RabbitModule } from './rabbit.module'
 
-class ContentProducerOptions {
+class PublisherOptions {
   queue?: string
   exchange?: string
   options?: Options.Publish
   routingKey?: string
 }
 
-export function Producer({ queue, exchange }: ContentProducerOptions) {
+export function Producer({ queue, exchange }: PublisherOptions) {
   if (queue) {
     return Inject(RabbitModule.QUEUE_PUBLISHER + queue)
   }
@@ -21,13 +21,10 @@ export function Producer({ queue, exchange }: ContentProducerOptions) {
   throw new Error(`Wrong provider configuration`)
 }
 
-export class ContentProducer {
+export class Publisher {
   public publish: (content: any) => void
 
-  constructor(
-    private channel: Channel,
-    producerOptions: ContentProducerOptions
-  ) {
+  constructor(private channel: Channel, producerOptions: PublisherOptions) {
     const { queue, options } = producerOptions
     if (queue) {
       this.publish = (data) => {
