@@ -1,21 +1,30 @@
 import { Injectable } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import * as Amqp from "amqplib";
+import { RabbitConfig } from "./rabbit.module";
 
 @Injectable()
 export class RabbitmqService {
   private _connection: Amqp.Connection;
   private _channel: Amqp.Channel;
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  constructor(
+    private readonly config: RabbitConfig,
+    private readonly eventEmitter: EventEmitter2
+  ) {}
 
   async onModuleInit() {
     await this.initialize();
   }
   private async initialize() {
     try {
-      const credentials = Amqp.credentials.plain("barbora", "barbora");
-      this._connection = await Amqp.connect("amqp://localhost:5672", {
+      const {
+        url,
+        credentials: { user, password },
+      } = this.config;
+
+      const credentials = Amqp.credentials.plain(user, password);
+      this._connection = await Amqp.connect(url, {
         credentials,
       });
       await this.setupInfrastructure();
