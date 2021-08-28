@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { RabbitConfig, RabbitModule } from "src/rabbit/rabbit.module";
 import { SomeConsumer } from "./some-consumer";
-import { SomeProducer } from "./some-producer";
 
 const config: RabbitConfig = {
   url: "amqp://localhost:5672",
@@ -34,6 +33,6 @@ const config: RabbitConfig = {
 
 @Module({
   imports: [RabbitModule.configure(config)],
-  providers: [SomeConsumer, SomeProducer],
+  providers: [SomeConsumer],
 })
 export class ClientModule {}
