@@ -1,36 +1,12 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common'
-import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter'
-import { Options } from 'amqplib'
-import * as Amqp from 'amqplib'
-import { MESSAGE_RECEIVED } from './on-message-received'
+import { EventEmitterModule } from '@nestjs/event-emitter'
+import { Channel, credentials, connect, Connection } from 'amqplib'
 import { Publisher } from './publisher'
-
-class Exchange {
-  exchange: string
-  type: 'direct' | 'topic' | 'headers' | 'fanout' | 'match' | string
-  options?: Options.AssertExchange
-}
-
-class BindQueue {
-  source: string
-  pattern: string
-  args?: any
-}
-class Queue {
-  queue: string
-  options?: Options.AssertQueue
-  bind?: BindQueue[] = []
-}
-
-export class RabbitConfig {
-  url: string
-  credentials: {
-    user: string
-    password: string
-  }
-  exchanges?: Exchange[] = []
-  queues?: Queue[] = []
-}
+import { InfrastructureService } from './infrastructure.service'
+import { MessageConsumptionService } from './message-consumption.service'
+import { Exchange } from './dto/exchange.dto'
+import { Queue } from './dto/queue.dto'
+import { RabbitConfig } from './dto/rabbit-config.dto'
 
 function killApp(err: Error) {
   if (err) {
@@ -38,16 +14,16 @@ function killApp(err: Error) {
   }
 }
 
-async function getConnection(config: RabbitConfig): Promise<Amqp.Connection> {
+async function getConnection(config: RabbitConfig): Promise<Connection> {
   try {
     const {
       url,
       credentials: { user, password },
     } = config
 
-    const credentials = Amqp.credentials.plain(user, password)
-    const connection = await Amqp.connect(url, {
-      credentials,
+    const cred = credentials.plain(user, password)
+    const connection = await connect(url, {
+      credentials: cred,
     })
     connection.on('close', (err) => {
       killApp(err)
@@ -56,36 +32,6 @@ async function getConnection(config: RabbitConfig): Promise<Amqp.Connection> {
   } catch (err) {
     killApp(err)
   }
-}
-
-async function setupInfrastructure(
-  connection: Amqp.Connection,
-  eventEmitter: EventEmitter2,
-  config: RabbitConfig
-): Promise<Amqp.Channel> {
-  const channel = await connection.createChannel()
-  for (const ex of config.exchanges) {
-    const { exchange, type, options } = ex
-    channel.assertExchange(exchange, type, options)
-  }
-
-  for (const q of config.queues) {
-    const { queue, options, bind } = q
-    channel.assertQueue(queue, options)
-
-    for (const b of bind) {
-      const { source, pattern, args } = b
-      channel.bindQueue(queue, source, pattern, args)
-    }
-
-    channel.consume(queue, (msg) => {
-      const content = JSON.parse(msg.content.toString())
-      const contentToPublish = content.message ? content.message : content
-      eventEmitter.emit(MESSAGE_RECEIVED + queue, contentToPublish)
-      channel.ack(msg)
-    })
-  }
-  return channel
 }
 
 function makeProducersForQueues(
@@ -98,7 +44,7 @@ function makeProducersForQueues(
     providers.push({
       provide: injectable,
       inject: ['channel'],
-      useFactory: (channel: Amqp.Channel) => {
+      useFactory: (channel: Channel) => {
         return new Publisher(channel, {
           queue: q.queue,
         })
@@ -118,7 +64,7 @@ function makeProducersForExchanges(
     providers.push({
       provide: injectable,
       inject: ['channel'],
-      useFactory: (channel: Amqp.Channel) => {
+      useFactory: (channel: Channel) => {
         return new Publisher(channel, {
           exchange: ex.exchange,
         })
@@ -131,18 +77,24 @@ function makeProducersForExchanges(
 export class RabbitModule {
   public static EXCHANGE_PUBLISHER = 'rabbit.exchange.'
   public static QUEUE_PUBLISHER = 'rabbit.queue.'
-  static async configure(config: RabbitConfig): Promise<DynamicModule> {
-    const connection = await getConnection(config)
+
+  static configure(config: RabbitConfig): DynamicModule {
     const exports: string[] = []
     const providers: Provider[] = [
       {
         provide: 'channel',
-        inject: [EventEmitter2],
-        useFactory: async (emitter: EventEmitter2) => {
-          const res = await setupInfrastructure(connection, emitter, config)
-          return res
+        useFactory: async () => {
+          const connection = await getConnection(config)
+          const channel = await connection.createChannel()
+          return channel
         },
       },
+      {
+        provide: 'config',
+        useValue: config,
+      },
+      InfrastructureService,
+      MessageConsumptionService,
     ]
 
     makeProducersForQueues(config.queues, providers, exports)

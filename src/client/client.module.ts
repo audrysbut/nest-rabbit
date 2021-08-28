@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
-import { RabbitConfig, RabbitModule } from 'src/rabbit/rabbit.module'
+import { RabbitConfig } from 'src/rabbit/dto/rabbit-config.dto'
+import { RabbitModule } from 'src/rabbit/rabbit.module'
 import { SomeConsumer } from './some-consumer'
 import { SomeProducer } from './some-producer'
 
