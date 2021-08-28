@@ -46,42 +46,24 @@ export class RabbitmqService {
 
   private async setupInfrastructure() {
     this._channel = await this._connection.createChannel();
-    this._channel.assertExchange("audrius-exchange", "direct", {
-      autoDelete: true,
-      durable: false,
-    });
-    this._channel.assertQueue("audrius-queue", {
-      // autoDelete: true,
-      // durable: false,
-    });
-    this._channel.bindQueue("audrius-queue", "audrius-exchange", "");
-    this._channel.consume("audrius-queue", (msg) => {
-      // console.log(`consumed from 'audrius-queue': ${msg.content}`)
-      this.eventEmitter.emit("audrius-queue", msg.content);
-      this._channel.ack(msg);
-    });
+    for (const ex of this.config.exchanges) {
+      const { exchange, type, options } = ex;
+      this._channel.assertExchange(exchange, type, options);
+    }
 
-    // for await (const exchange of this.setupOptions.exchanges) {
-    //   await this._channel.assertExchange(
-    //     exchange.name,
-    //     exchange.type,
-    //     exchange.options
-    //   )
+    for (const q of this.config.queues) {
+      const { queue, options, bind } = q;
+      this._channel.assertQueue(queue, options);
 
-    //   if (exchange.bindQueues) {
-    //     for await (const queue of exchange.bindQueues) {
-    //       await this._channel.assertQueue(queue.name, queue.options)
-    //       if (queue.args) {
-    //         for await (const args of queue.args) {
-    //           await this._channel.bindQueue(queue.name, exchange.name, '', args)
-    //         }
-    //       } else {
-    //         await this._channel.bindQueue(queue.name, exchange.name, '')
-    //       }
-    //     }
-    //   }
-    // }
+      for (const b of bind) {
+        const { source, pattern, args } = b;
+        this._channel.bindQueue(queue, source, pattern, args);
+      }
 
-    // logger.info('connected to RabbitMq')
+      this._channel.consume(queue, (msg) => {
+        this.eventEmitter.emit(queue, msg.content);
+        this._channel.ack(msg);
+      });
+    }
   }
 }
