@@ -1,5 +1,5 @@
 import { OnEvent } from "@nestjs/event-emitter";
 
-export function OnMessageReceived(queueName: string) {
+export function Comsumer(queueName: string) {
   return OnEvent(queueName);
 }
