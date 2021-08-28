@@ -1,17 +1,18 @@
-import { Module } from "@nestjs/common";
-import { RabbitConfig, RabbitModule } from "src/rabbit/rabbit.module";
-import { SomeConsumer } from "./some-consumer";
+import { Module } from '@nestjs/common'
+import { RabbitConfig, RabbitModule } from 'src/rabbit/rabbit.module'
+import { SomeConsumer } from './some-consumer'
+import { SomeProducer } from './some-producer'
 
 const config: RabbitConfig = {
-  url: "amqp://localhost:5672",
+  url: 'amqp://localhost:5672',
   credentials: {
-    user: "barbora",
-    password: "barbora",
+    user: 'barbora',
+    password: 'barbora',
   },
   exchanges: [
     {
-      exchange: "audrius-exchange",
-      type: "direct",
+      exchange: 'audrius-exchange',
+      type: 'direct',
       options: {
         autoDelete: true,
         durable: false,
@@ -20,19 +21,19 @@ const config: RabbitConfig = {
   ],
   queues: [
     {
-      queue: "audrius-queue",
+      queue: 'audrius-queue',
       bind: [
         {
-          source: "audrius-exchange",
-          pattern: "",
+          source: 'audrius-exchange',
+          pattern: '',
         },
       ],
     },
   ],
-};
+}
 
 @Module({
   imports: [RabbitModule.configure(config)],
-  providers: [SomeConsumer],
+  providers: [SomeConsumer, SomeProducer],
 })
 export class ClientModule {}
