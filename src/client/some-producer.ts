@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common'
 import { Producer, Publisher } from '../rabbit/publisher'
+import { Person } from './Person.dto'
 
 @Injectable()
 export class SomeProducer {
-  constructor(@Producer({ exchange: 'audrius-exchange' }) producer: Publisher) {
+  @Producer({ exchange: 'audrius-exchange' })
+  private producer: Publisher
+
+  constructor() {
     setInterval(() => {
-      const person = {
+      const person: Person = {
         name: 'Jonas',
       }
-      producer.publish(person)
-    }, 2000)
+      this.producer.publish(person)
+    }, 5000)
   }
 }

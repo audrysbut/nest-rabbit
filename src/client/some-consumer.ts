@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { Comsumer } from 'src/rabbit/on-message-received'
+import { Person } from './Person.dto'
 
 @Injectable()
 export class SomeConsumer {
   @Comsumer('audrius-queue')
-  consumeMessage(content: { name: string }) {
-    console.log(`consumer received: '${content.name}'`)
+  consumeMessage(person: Person) {
+    console.log(`consumer received: '${person.name}'`)
   }
 }
