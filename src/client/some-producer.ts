@@ -8,11 +8,12 @@ export class SomeProducer {
   private producer: Publisher
 
   constructor() {
+    let i = 0
     setInterval(() => {
       const person: Person = {
-        name: 'Jonas',
+        name: `Jonas ${++i}`,
       }
       this.producer.publish(person)
-    }, 5000)
+    }, 1000)
   }
 }
