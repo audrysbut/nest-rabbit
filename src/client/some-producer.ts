@@ -5,7 +5,7 @@ import { Person } from './Person.dto'
 @Injectable()
 export class SomeProducer {
   @Producer({ exchange: 'audrius-exchange' })
-  private producer: Publisher
+  private producer: Publisher<any>
 
   constructor() {
     let i = 0

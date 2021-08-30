@@ -21,8 +21,8 @@ export function Producer({ queue, exchange }: PublisherOptions) {
   throw new Error(`Wrong provider configuration`)
 }
 
-export class Publisher {
-  public publish: (content: any) => void
+export class Publisher<T> {
+  public publish: (content: T) => void
 
   constructor(private channel: Channel, producerOptions: PublisherOptions) {
     const { queue, options } = producerOptions
