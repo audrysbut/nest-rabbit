@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Channel, ConsumeMessage } from 'amqplib'
 import { RabbitConfig } from './dto/rabbit-config.dto'
+import { MessageAction } from './message-action'
 import { MESSAGE_RECEIVED } from './on-message-received'
 
 @Injectable()
@@ -18,17 +19,24 @@ export class MessageConsumptionService {
     for (const q of this.config.queues) {
       const eventName = MESSAGE_RECEIVED + q.queue
       if (this.emitter.hasListeners(eventName)) {
-        this.channel.consume(q.queue, (msg) =>
-          this.consumeMessage(eventName, msg)
-        )
+        const listeners = this.emitter.listeners(eventName)
+        if (listeners.length > 0) {
+          this.channel.consume(q.queue, (msg) => {
+            const content = JSON.parse(msg.content.toString())
+            const contentToPublish = content.message ? content.message : content
+
+            const actions = new MessageAction(this.channel, msg)
+            try {
+              for (const listener of listeners) {
+                listener(contentToPublish, actions)
+              }
+              actions.acn()
+            } catch (err) {
+              actions.nack()
+            }
+          })
+        }
       }
     }
-  }
-
-  private consumeMessage(eventName: string, msg: ConsumeMessage) {
-    const content = JSON.parse(msg.content.toString())
-    const contentToPublish = content.message ? content.message : content
-    this.emitter.emit(eventName, contentToPublish)
-    this.channel.ack(msg)
   }
 }
