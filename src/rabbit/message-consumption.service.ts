@@ -12,23 +12,25 @@ export class MessageConsumptionService {
     @Inject('channel') private readonly channel: Channel,
     @Inject('config') private readonly config: RabbitConfig,
     private readonly emitter: EventEmitter2
-  ) {
-    setTimeout(() => this.startConsuming(), 500)
+  ) {}
+
+  onApplicationBootstrap() {
+    this.startConsuming()
   }
 
   private startConsuming() {
-    for (const q of this.config.queues) {
-      const eventName = MESSAGE_RECEIVED + q.queue
+    for (const { queue } of this.config.queues) {
+      const eventName = MESSAGE_RECEIVED + queue
       if (this.emitter.hasListeners(eventName)) {
-        this.onListenersExist(eventName, q)
+        this.onListenersExist(eventName, queue)
       }
     }
   }
 
-  private onListenersExist(eventName: string, q: Queue) {
+  private onListenersExist(eventName: string, queue: string) {
     const listeners = this.emitter.listeners(eventName)
     if (listeners.length > 0) {
-      this.channel.consume(q.queue, (msg) => {
+      this.channel.consume(queue, (msg) => {
         const content = JSON.parse(msg.content.toString())
         const contentToPublish = content.message ? content.message : content
 
