@@ -2,7 +2,7 @@ import { DynamicModule, Module, Provider } from '@nestjs/common'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { Channel, credentials, connect, Connection } from 'amqplib'
 import { Publisher } from './publisher'
-import { InfrastructureService } from './infrastructure.service'
+import { InfrastructureSetupService } from './infrastructure-setup.service'
 import { MessageConsumptionService } from './message-consumption.service'
 import { Exchange } from './dto/exchange.dto'
 import { Queue } from './dto/queue.dto'
@@ -59,14 +59,14 @@ function makeProducersForExchanges(
   providers: Provider<any>[],
   exports: string[]
 ) {
-  for (const ex of exchanges) {
-    const injectable = RabbitModule.EXCHANGE_PUBLISHER + ex.exchange
+  for (const { exchange } of exchanges) {
+    const injectable = RabbitModule.EXCHANGE_PUBLISHER + exchange
     providers.push({
       provide: injectable,
       inject: ['channel'],
       useFactory: (channel: Channel) => {
         return new Publisher(channel, {
-          exchange: ex.exchange,
+          exchange,
         })
       },
     })
@@ -93,7 +93,7 @@ export class RabbitModule {
         provide: 'config',
         useValue: config,
       },
-      InfrastructureService,
+      InfrastructureSetupService,
       MessageConsumptionService,
     ]
 

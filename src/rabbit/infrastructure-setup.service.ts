@@ -3,7 +3,7 @@ import { Channel } from 'amqplib'
 import { RabbitConfig } from './dto/rabbit-config.dto'
 
 @Injectable()
-export class InfrastructureService {
+export class InfrastructureSetupService {
   constructor(
     @Inject('channel') private readonly channel: Channel,
     @Inject('config') private readonly config: RabbitConfig

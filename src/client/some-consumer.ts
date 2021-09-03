@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { Comsumer } from 'src/rabbit/on-message-received'
+import { Comsumer } from 'src/rabbit/consumer'
 import { Person } from './Person.dto'
 
 @Injectable()

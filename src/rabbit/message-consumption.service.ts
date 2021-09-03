@@ -4,7 +4,7 @@ import { Channel } from 'amqplib'
 import { Queue } from './dto/queue.dto'
 import { RabbitConfig } from './dto/rabbit-config.dto'
 import { MessageAction } from './message-action'
-import { MESSAGE_RECEIVED } from './on-message-received'
+import { MESSAGE_RECEIVED } from './consumer'
 
 @Injectable()
 export class MessageConsumptionService {
